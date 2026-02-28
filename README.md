@@ -1,11 +1,27 @@
-<div align="center">
+# L'YSF LIFE CENTER | Enterprise AI Management
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+Bu sistem, L'YSF Güzellik Merkezi için özel olarak tasarlanmış, Yapay Zeka destekli bir işletme yönetim üssüdür.
 
-  <h1>Built with AI Studio</h2>
+## 🚀 GitHub Üzerinden Çalıştırma (Hızlı Kurulum)
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+Bu uygulamayı bir web sitesi gibi her yerden açmak için şu adımları izleyin:
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+1. **Dosyaları İndirin:** Bu projedeki tüm dosyaları bilgisayarınıza indirin.
+2. **GitHub'a Yükleyin:** 
+   - GitHub profilinizde yeni bir "Repository" açın.
+   - Dosyaları oraya sürükleyip bırakın.
+3. **Yayına Alın (En İyi Yol):**
+   - [Vercel.com](https://vercel.com) adresine gidin.
+   - GitHub hesabınızla bağlanın.
+   - Bu projeyi seçin ve "Deploy" butonuna basın.
+   - Sistem size özel bir internet adresi (URL) verecektir.
 
-</div>
+## 🔒 Güvenlik Notları
+- **Veriler:** Verileriniz hiçbir sunucuya yüklenmez, sadece o an kullandığınız tarayıcıda saklanır.
+- **Şifre:** Yönetici paneli şifresi varsayılan olarak `LYSF2024` olarak ayarlanmıştır.
+- **Yedekleme:** Başka bir cihaza geçmek isterseniz "Büyüme Merkezi" sekmesinden "Veriyi Yedekle" yapıp, yeni cihazda "Yedeği Yükle" demeniz yeterlidir.
+
+## 🛠 Teknik Detaylar
+- **Frontend:** React + Tailwind CSS + Lucide Icons
+- **AI:** Google Gemini Pro & Flash
+- **Analiz:** Recharts Financial Charts

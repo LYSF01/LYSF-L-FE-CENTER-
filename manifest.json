@@ -1,0 +1,25 @@
+
+{
+  "name": "L'YSF LIFE CENTER | Enterprise AI",
+  "short_name": "L'YSF",
+  "description": "Next-gen wellness management system with German-discipline financial auditing and AI predictive growth.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fcfdfe",
+  "theme_color": "#fcfdfe",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3662/3662817.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3662/3662817.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}

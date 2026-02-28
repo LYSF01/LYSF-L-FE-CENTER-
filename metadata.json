@@ -1,0 +1,9 @@
+{
+  "name": "Copy of L'YSF LIFE CENTER | Enterprise AI",
+  "description": "Next-gen wellness management system with German-discipline financial auditing and AI predictive growth.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

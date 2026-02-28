@@ -163,8 +163,8 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
 
   const [loyaltyRules, setLoyaltyRules] = useState<LoyaltyRule[]>([
-    { id: 'lr1', minPoints: 10000, reward: 'Ücretsiz Yüz Maskesi Hediyesi!' },
-    { id: 'lr2', minPoints: 25000, reward: 'Vücut Analizi & Diyetisyen Randevusu Hediye!' }
+    { id: 'lr1', type: 'POINTS', minPoints: 10000, reward: 'Ücretsiz Yüz Maskesi Hediyesi!' },
+    { id: 'lr2', type: 'POINTS', minPoints: 25000, reward: 'Vücut Analizi & Diyetisyen Randevusu Hediye!' }
   ]);
   const [loyaltyRate, setLoyaltyRate] = useState<number>(5);
   const [tierLimits, setTierLimits] = useState<Record<string, number>>({
@@ -395,7 +395,7 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       else { setProducts(prev => [...prev, p]); saveLocal('products', [...products, p]); } 
   };
   const updateProduct = async (p: Product) => { 
-      if (!isDemoMode && db) { await updateDoc(doc(db, 'products', p.id), p); }
+      if (!isDemoMode && db) { await updateDoc(doc(db, 'products', p.id), p as any); }
       else { setProducts(prev => prev.map(i => i.id === p.id ? p : i)); saveLocal('products', products.map(i => i.id === p.id ? p : i)); }
   };
   
@@ -404,7 +404,7 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       else { setServices(prev => [...prev, s]); saveLocal('services', [...services, s]); }
   };
   const updateService = async (s: Service) => { 
-      if (!isDemoMode && db) { await updateDoc(doc(db, 'services', s.id), s); }
+      if (!isDemoMode && db) { await updateDoc(doc(db, 'services', s.id), s as any); }
       else { setServices(prev => prev.map(i => i.id === s.id ? s : i)); saveLocal('services', services.map(i => i.id === s.id ? s : i)); }
   };
   
@@ -413,7 +413,7 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       else { setStaff(prev => [...prev, s]); saveLocal('staff', [...staff, s]); }
   };
   const updateStaff = async (s: Staff) => { 
-      if (!isDemoMode && db) { await updateDoc(doc(db, 'staff', s.id), s); }
+      if (!isDemoMode && db) { await updateDoc(doc(db, 'staff', s.id), s as any); }
       else { setStaff(prev => prev.map(i => i.id === s.id ? s : i)); saveLocal('staff', staff.map(i => i.id === s.id ? s : i)); }
   };
   
@@ -422,7 +422,7 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       else { setCustomers(prev => [...prev, c]); saveLocal('customers', [...customers, c]); }
   };
   const updateCustomer = async (c: Customer) => { 
-      if (!isDemoMode && db) { await updateDoc(doc(db, 'customers', c.id), c); }
+      if (!isDemoMode && db) { await updateDoc(doc(db, 'customers', c.id), c as any); }
       else { setCustomers(prev => prev.map(i => i.id === c.id ? c : i)); saveLocal('customers', customers.map(i => i.id === c.id ? c : i)); }
   };
   
@@ -439,7 +439,7 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       else { setDrinks(prev => [...prev, d]); saveLocal('drinks', [...drinks, d]); }
   };
   const updateDrink = async (d: Drink) => { 
-      if (!isDemoMode && db) { await updateDoc(doc(db, 'drinks', d.id), d); }
+      if (!isDemoMode && db) { await updateDoc(doc(db, 'drinks', d.id), d as any); }
       else { setDrinks(prev => prev.map(i => i.id === d.id ? d : i)); saveLocal('drinks', drinks.map(i => i.id === d.id ? d : i)); }
   };
   
@@ -448,7 +448,7 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       else { setServicePackages(prev => [...prev, p]); saveLocal('servicePackages', [...servicePackages, p]); }
   };
   const updatePackage = async (p: ServicePackage) => { 
-      if (!isDemoMode && db) { await updateDoc(doc(db, 'servicePackages', p.id), p); }
+      if (!isDemoMode && db) { await updateDoc(doc(db, 'servicePackages', p.id), p as any); }
       else { setServicePackages(prev => prev.map(i => i.id === p.id ? p : i)); saveLocal('servicePackages', servicePackages.map(i => i.id === p.id ? p : i)); }
   };
   
@@ -575,7 +575,7 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // --- DELETE FUNCTIONALITY (SOFT DELETE FOR CLOUD) ---
   const deleteData = async (id: string, type: string) => {
-      if (!confirm("Silmek istediğinize emin misiniz?")) return;
+      if (!window.confirm("Silmek istediğinize emin misiniz?")) return;
 
       if (!isDemoMode && db) {
           const collectionMap: Record<string, string> = {

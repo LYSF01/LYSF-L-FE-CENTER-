@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSalon } from '../store/SalonContext';
-import { analyzeSkinDetailedJSON, getAICustomerSuggestions } from '../geminiService';
+import { analyzeSkinDetailedJSON, getAICustomerSuggestions, getPersonalizedRecommendations } from '../geminiService';
 import { SignedDocument, Customer, Drink, MembershipTier, DietDay } from '../types';
 import { 
   ShieldCheck, ArrowRight, Sparkles, PenTool, Fingerprint, 
@@ -82,6 +82,7 @@ export const CustomerPortal: React.FC = () => {
   
   // AI Recommendations State
   const [aiRecommendations, setAiRecommendations] = useState<AIRecommendation | null>(null);
+  const [wellnessPlan, setWellnessPlan] = useState<any>(null);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   // Sync activeCustomer with context updates to reflect messages immediately
@@ -209,8 +210,18 @@ export const CustomerPortal: React.FC = () => {
     setLoadingRecommendations(true);
     setApiError(null);
     try {
-      const recs = await getAICustomerSuggestions(activeCustomer, services, staff);
+      const [recs, plan] = await Promise.all([
+          getAICustomerSuggestions(activeCustomer, services, staff),
+          getPersonalizedRecommendations(activeCustomer, services)
+      ]);
       setAiRecommendations(recs);
+      setWellnessPlan(plan);
+      
+      // Save to customer record
+      const updatedCustomer = { ...activeCustomer, wellnessPlan: plan };
+      updateCustomer(updatedCustomer);
+      setActiveCustomer(updatedCustomer);
+      
     } catch (error) {
       console.error(error);
       setApiError("Yapay zeka asistanına şu an ulaşılamıyor.");
@@ -956,12 +967,41 @@ export const CustomerPortal: React.FC = () => {
         {currentTab === 'STAMPS' && (
             <div className="animate-in slide-in-from-bottom-10 space-y-10">
                 <h2 className={`text-5xl font-black italic mb-8 ${tierTheme.text}`}>Sadakat Kartları</h2>
+                
+                {/* REWARDS PATH VISUALIZATION */}
+                <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl relative overflow-hidden mb-10">
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 via-rose-500 to-indigo-600"></div>
+                    <h3 className="text-2xl font-black italic text-slate-900 mb-8">Ödül Yolculuğunuz</h3>
+                    <div className="relative">
+                        <div className="absolute top-1/2 left-0 w-full h-2 bg-slate-100 -translate-y-1/2 rounded-full"></div>
+                        <div className="flex justify-between relative z-10">
+                            {[
+                                { label: 'Başlangıç', icon: Star, active: true },
+                                { label: 'Bronz', icon: Award, active: true },
+                                { label: 'Silver', icon: Crown, active: [MembershipTier.SILVER, MembershipTier.GOLD, MembershipTier.PLATINUM, MembershipTier.BLACK_VIP].includes(activeCustomer.tier) },
+                                { label: 'Gold', icon: Zap, active: [MembershipTier.GOLD, MembershipTier.PLATINUM, MembershipTier.BLACK_VIP].includes(activeCustomer.tier) },
+                                { label: 'Platinum', icon: Diamond, active: [MembershipTier.PLATINUM, MembershipTier.BLACK_VIP].includes(activeCustomer.tier) }
+                            ].map((step, i) => (
+                                <div key={i} className="flex flex-col items-center gap-4">
+                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center border-4 transition-all ${step.active ? 'bg-slate-900 border-slate-900 text-white scale-110 shadow-lg' : 'bg-white border-slate-200 text-slate-300'}`}>
+                                        <step.icon size={24} />
+                                    </div>
+                                    <span className={`text-xs font-black uppercase tracking-widest ${step.active ? 'text-slate-900' : 'text-slate-300'}`}>{step.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     {['skinCare', 'nail'].map((cat: any) => {
                         const current = activeCustomer.loyaltyStamps?.[cat] || 0;
                         return (
-                            <div key={cat} className="bg-slate-900 text-white p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
+                            <div key={cat} className="bg-slate-900 text-white p-10 rounded-[3rem] shadow-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform">
                                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 via-rose-500 to-indigo-600"></div>
+                                <div className="absolute -right-10 -bottom-10 text-white/5 rotate-12 group-hover:rotate-0 transition-transform duration-700">
+                                    <Stamp size={200} />
+                                </div>
                                 <div className="flex justify-between items-center mb-8 relative z-10">
                                     <div>
                                         <h3 className="text-2xl font-black italic uppercase">{cat === 'skinCare' ? 'Cilt Bakımı' : 'Nail Art'}</h3>
@@ -971,8 +1011,8 @@ export const CustomerPortal: React.FC = () => {
                                 </div>
                                 <div className="grid grid-cols-3 gap-4 relative z-10">
                                     {[1, 2, 3, 4, 5, 6].map(idx => (
-                                        <div key={idx} className={`aspect-square rounded-2xl flex items-center justify-center border-2 transition-all ${idx <= current ? 'bg-white text-slate-900 border-white' : 'border-white/20 text-white/20'}`}>
-                                            {idx <= current ? <CheckCircle size={32} /> : <span className="font-black text-xl">{idx}</span>}
+                                        <div key={idx} className={`aspect-square rounded-2xl flex items-center justify-center border-2 transition-all ${idx <= current ? 'bg-white text-slate-900 border-white shadow-lg scale-105' : 'border-white/20 text-white/20'}`}>
+                                            {idx <= current ? <CheckCircle size={32} className="text-emerald-500" /> : <span className="font-black text-xl">{idx}</span>}
                                         </div>
                                     ))}
                                 </div>

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSalon } from '../store/SalonContext';
 import { fetchStaffPerformanceAnalytics, StaffPerformanceReport } from '../services/performanceService';
-import { TrendingUp, Zap, ShieldAlert, Plus, Trash2, Wallet, Lock, Unlock, AlertOctagon, BrainCircuit, Activity, EyeOff, ShieldCheck, Percent, ShoppingBag, Bell, Clock, X, Calendar, AlertTriangle, TrendingDown, FileBarChart, CreditCard, Banknote, Coffee, CheckCircle, Truck, ChefHat, Star, MessageCircle, UserPlus, CheckCircle2, User, Smile, Frown, Meh, BarChart2 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, BarChart, Bar, Cell, RadialBarChart, RadialBar } from 'recharts';
+import { forecastDemand, analyzeProfitability, predictBusinessGrowth } from '../geminiService';
+import { TrendingUp, Zap, ShieldAlert, Plus, Trash2, Wallet, Lock, Unlock, AlertOctagon, BrainCircuit, Activity, EyeOff, ShieldCheck, Percent, ShoppingBag, Bell, Clock, X, Calendar, AlertTriangle, TrendingDown, FileBarChart, CreditCard, Banknote, Coffee, CheckCircle, Truck, ChefHat, Star, MessageCircle, UserPlus, CheckCircle2, User, Smile, Frown, Meh, BarChart2, PieChart, Target, ArrowUpRight, ArrowDownRight, Loader2, FileDown, Printer, Rocket } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, BarChart, Bar, Cell, RadialBarChart, RadialBar, Pie, PieChart as RePieChart } from 'recharts';
 import { DrinkOrder, MembershipTier } from '../types';
 
 export const ManagerDashboard: React.FC = () => {
-  const { transactions, expenses, addExpense, deleteData, staff, currentRole, notifications, markNotifRead, checkServicePerformance, drinkOrders, updateDrinkOrderStatus, addCustomer } = useSalon();
+  const { transactions, expenses, addExpense, deleteData, staff, currentRole, notifications, markNotifRead, checkServicePerformance, drinkOrders, updateDrinkOrderStatus, addCustomer, services } = useSalon();
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [isPanicMode, setIsPanicMode] = useState(false);
   const [isGhostMode, setIsGhostMode] = useState(false);
@@ -15,6 +16,15 @@ export const ManagerDashboard: React.FC = () => {
   // API Fetch State
   const [apiPerformanceData, setApiPerformanceData] = useState<StaffPerformanceReport[] | null>(null);
   const [isLoadingApi, setIsLoadingApi] = useState(false);
+
+  // Financial Audit State
+  const [profitAnalysis, setProfitAnalysis] = useState<any>(null);
+  const [demandForecast, setDemandForecast] = useState<any>(null);
+  const [isAuditing, setIsAuditing] = useState(false);
+
+  // Growth Forecast State
+  const [growthForecast, setGrowthForecast] = useState<any>(null);
+  const [isForecasting, setIsForecasting] = useState(false);
 
   // Dashboard açıldığında performans kontrolü yap
   useEffect(() => {
@@ -33,6 +43,64 @@ export const ManagerDashboard: React.FC = () => {
           console.error("API Error:", error);
       }
       setIsLoadingApi(false);
+  };
+
+  const runFinancialAudit = async () => {
+      setIsAuditing(true);
+      try {
+          const [profit, demand] = await Promise.all([
+              analyzeProfitability(transactions, expenses, services),
+              forecastDemand(transactions, services)
+          ]);
+          setProfitAnalysis(profit);
+          setDemandForecast(demand);
+      } catch (error) {
+          console.error("Audit Error:", error);
+          alert("Finansal denetim sırasında bir hata oluştu.");
+      }
+      setIsAuditing(false);
+  };
+
+  const runGrowthForecast = async () => {
+      setIsForecasting(true);
+      try {
+          const result = await predictBusinessGrowth(transactions, services);
+          setGrowthForecast(result);
+      } catch (error) {
+          console.error("Forecast Error:", error);
+          alert("Büyüme tahmini sırasında bir hata oluştu.");
+      }
+      setIsForecasting(false);
+  };
+
+  const handleExport = (type: 'CSV' | 'PRINT') => {
+      if (!profitAnalysis || !demandForecast) return;
+
+      if (type === 'PRINT') {
+          window.print();
+      } else if (type === 'CSV') {
+          const headers = ['Service Name', 'Revenue', 'Estimated Cost', 'Net Profit', 'Margin', 'Status'];
+          const rows = profitAnalysis.serviceAnalysis.map((s: any) => [
+              s.serviceName,
+              s.revenue,
+              s.estimatedCost,
+              s.netProfit,
+              s.margin,
+              s.status
+          ]);
+          
+          const csvContent = "data:text/csv;charset=utf-8," 
+              + headers.join(",") + "\n" 
+              + rows.map((e: any[]) => e.join(",")).join("\n");
+              
+          const encodedUri = encodeURI(csvContent);
+          const link = document.createElement("a");
+          link.setAttribute("href", encodedUri);
+          link.setAttribute("download", `financial_audit_${new Date().toISOString().split('T')[0]}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+      }
   };
 
   // GÜNLÜK GELİR TRENDİ VERİSİ (SON 14 GÜN)
@@ -249,6 +317,136 @@ export const ManagerDashboard: React.FC = () => {
                     <FinCard label="Net Kar Analizi" val={netProfit} color="emerald" />
                 </div>
                 </div>
+            </div>
+
+            {/* FINANCIAL AUDIT SECTION (GERMAN DISCIPLINE) */}
+            <div className="bg-white rounded-[4rem] p-16 shadow-sm border border-slate-100 relative overflow-hidden">
+                <div className="flex justify-between items-center mb-12">
+                    <div>
+                        <h3 className="text-4xl font-black italic tracking-tighter text-slate-900 flex items-center gap-4"><Target className="text-rose-600" size={40}/> Finansal Denetim</h3>
+                        <p className="text-slate-400 font-bold uppercase tracking-[0.2em] mt-2">KARLILIK & TALEP TAHMİNİ</p>
+                    </div>
+                    <div className="flex gap-2">
+                        {profitAnalysis && (
+                            <>
+                                <button onClick={() => handleExport('CSV')} className="p-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-colors" title="CSV İndir"><FileDown size={20}/></button>
+                                <button onClick={() => handleExport('PRINT')} className="p-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-colors" title="Yazdır"><Printer size={20}/></button>
+                            </>
+                        )}
+                        <button 
+                            onClick={runFinancialAudit} 
+                            disabled={isAuditing}
+                            className={`px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm transition-all flex items-center gap-3 ${isAuditing ? 'bg-slate-100 text-slate-400 cursor-wait' : 'bg-slate-900 text-white hover:bg-rose-600 shadow-xl'}`}
+                        >
+                            {isAuditing ? <><Loader2 className="animate-spin"/> Denetleniyor...</> : <><Zap size={18}/> Denetimi Başlat</>}
+                        </button>
+                    </div>
+                </div>
+
+                {profitAnalysis && demandForecast && (
+                    <div className="space-y-12 animate-in slide-in-from-bottom-10">
+                        {/* 1. PROFITABILITY CARDS */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="bg-emerald-50 p-8 rounded-[3rem] border border-emerald-100">
+                                <p className="text-[10px] font-black uppercase text-emerald-400 tracking-widest mb-4">EN KARLI HİZMETLER</p>
+                                <ul className="space-y-4">
+                                    {profitAnalysis.topPerformers.slice(0, 3).map((s: string, i: number) => (
+                                        <li key={i} className="flex items-center gap-3 font-black text-emerald-900 text-lg"><ArrowUpRight size={20}/> {s}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div className="bg-rose-50 p-8 rounded-[3rem] border border-rose-100">
+                                <p className="text-[10px] font-black uppercase text-rose-400 tracking-widest mb-4">KRİTİK HİZMETLER</p>
+                                <ul className="space-y-4">
+                                    {profitAnalysis.underPerformers.slice(0, 3).map((s: string, i: number) => (
+                                        <li key={i} className="flex items-center gap-3 font-black text-rose-900 text-lg"><ArrowDownRight size={20}/> {s}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div className="bg-slate-900 p-8 rounded-[3rem] text-white relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-8 opacity-10"><FileBarChart size={100}/></div>
+                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">DENETÇİ RAPORU</p>
+                                <p className="text-sm font-medium italic leading-relaxed opacity-80 relative z-10">"{profitAnalysis.auditReport.slice(0, 200)}..."</p>
+                            </div>
+                        </div>
+
+                        {/* 2. DEMAND FORECAST CHART */}
+                        <div className="bg-slate-50 rounded-[3rem] p-10 border border-slate-100">
+                            <h4 className="text-xl font-black italic text-slate-900 mb-8 flex items-center gap-3"><TrendingUp size={24} className="text-indigo-600"/> Gelecek Ay Talep Tahmini</h4>
+                            <div className="h-[300px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={demandForecast.forecasts.sort((a:any,b:any) => b.predictedCount - a.predictedCount).slice(0, 8)}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                        <XAxis dataKey="serviceName" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 700}} interval={0} angle={-15} textAnchor="end" height={60}/>
+                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 700}} />
+                                        <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 'bold'}} />
+                                        <Bar dataKey="predictedCount" name="Tahmini Adet" radius={[10, 10, 0, 0]}>
+                                            {demandForecast.forecasts.map((entry: any, index: number) => (
+                                                <Cell key={`cell-${index}`} fill={entry.trend === 'UP' ? '#10b981' : entry.trend === 'DOWN' ? '#f43f5e' : '#6366f1'} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="mt-6 flex gap-4 justify-center">
+                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500"><div className="w-3 h-3 rounded-full bg-emerald-500"></div> Yükseliş</div>
+                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500"><div className="w-3 h-3 rounded-full bg-indigo-500"></div> Stabil</div>
+                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500"><div className="w-3 h-3 rounded-full bg-rose-500"></div> Düşüş</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* GROWTH FORECAST SECTION */}
+            <div className="bg-white rounded-[4rem] p-16 shadow-sm border border-slate-100 relative overflow-hidden">
+                <div className="flex justify-between items-center mb-12">
+                    <div>
+                        <h3 className="text-4xl font-black italic tracking-tighter text-slate-900 flex items-center gap-4"><Rocket className="text-indigo-600" size={40}/> Büyüme Tahmini</h3>
+                        <p className="text-slate-400 font-bold uppercase tracking-[0.2em] mt-2">GELECEK 6 AY PROJEKSİYONU</p>
+                    </div>
+                    <button 
+                        onClick={runGrowthForecast} 
+                        disabled={isForecasting}
+                        className={`px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm transition-all flex items-center gap-3 ${isForecasting ? 'bg-slate-100 text-slate-400 cursor-wait' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-xl'}`}
+                    >
+                        {isForecasting ? <><Loader2 className="animate-spin"/> Hesaplanıyor...</> : <><BrainCircuit size={18}/> Tahmin Oluştur</>}
+                    </button>
+                </div>
+
+                {growthForecast && (
+                    <div className="space-y-12 animate-in slide-in-from-bottom-10">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                             <div className="bg-indigo-50 p-8 rounded-[3rem] border border-indigo-100">
+                                <p className="text-[10px] font-black uppercase text-indigo-400 tracking-widest mb-4">TAHMİNİ BÜYÜME</p>
+                                <p className="text-5xl font-black text-indigo-900 tracking-tighter">%{growthForecast.growthRate}</p>
+                                <p className="text-sm font-bold text-indigo-600 mt-2">Önümüzdeki 6 Ay</p>
+                            </div>
+                            <div className="bg-emerald-50 p-8 rounded-[3rem] border border-emerald-100">
+                                <p className="text-[10px] font-black uppercase text-emerald-400 tracking-widest mb-4">POTANSİYEL CİRO</p>
+                                <p className="text-4xl font-black text-emerald-900 tracking-tighter">{growthForecast.projectedRevenue.toLocaleString()} TL</p>
+                                <p className="text-sm font-bold text-emerald-600 mt-2">Hedeflenen</p>
+                            </div>
+                             <div className="bg-slate-900 p-8 rounded-[3rem] text-white relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-8 opacity-10"><TrendingUp size={100}/></div>
+                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">STRATEJİK TAVSİYE</p>
+                                <p className="text-sm font-medium italic leading-relaxed opacity-80 relative z-10">"{growthForecast.strategySuggestion}"</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-50 rounded-[3rem] p-10 border border-slate-100">
+                            <h4 className="text-xl font-black italic text-slate-900 mb-8">Fırsat Alanları</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {growthForecast.opportunities.map((opp: string, i: number) => (
+                                    <div key={i} className="flex items-start gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                        <div className="bg-indigo-100 text-indigo-600 p-2 rounded-xl"><Zap size={20}/></div>
+                                        <p className="font-bold text-slate-700">{opp}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* PERFORMANCE & FEEDBACK INTELLIGENCE (NEW API MODULE) */}
@@ -535,7 +733,7 @@ export const ManagerDashboard: React.FC = () => {
                                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{e.category}</p>
                                 <p className="text-[10px] text-slate-300 font-bold mt-1">{new Date(e.date).toLocaleDateString()}</p>
                             </div>
-                            <div className="flex items-center gap-8"><p className="font-black text-rose-500 text-3xl">-{e.amount.toLocaleString()} TL</p><button onClick={() => deleteData(e.id, 'EXPENSE')} className="p-4 text-slate-200 hover:text-rose-500 transition-all"><Trash2 size={24}/></button></div>
+                            <div className="flex items-center gap-8"><p className="font-black text-rose-500 text-3xl">-{e.amount.toLocaleString()} TL</p><button onClick={(evt) => { evt.stopPropagation(); deleteData(e.id, 'EXPENSE'); }} className="p-4 text-slate-200 hover:text-rose-500 transition-all"><Trash2 size={24}/></button></div>
                         </div>
                         ))}
                     </div>

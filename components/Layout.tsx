@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSalon } from '../store/SalonContext';
 import { UserRole } from '../types';
+import { GuidedTour } from './GuidedTour';
 import { 
   LayoutDashboard, 
   Users, 
@@ -24,13 +25,15 @@ import {
   LogOut,
   ShieldCheck,
   Apple,
-  Tablet
+  Tablet,
+  HelpCircle
 } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode; currentTab: string; setTab: (t: string) => void }> = ({ children, currentTab, setTab }) => {
   const { currentRole, exportData, logout, isOnline } = useSalon();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showInstallHelp, setShowInstallHelp] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -39,6 +42,58 @@ export const Layout: React.FC<{ children: React.ReactNode; currentTab: string; s
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  // Check for first time user
+  useEffect(() => {
+    const hasSeenTour = localStorage.getItem('hasSeenOnboardingTour');
+    if (!hasSeenTour) {
+        setShowTour(true);
+    }
+  }, []);
+
+  const handleTourComplete = () => {
+      localStorage.setItem('hasSeenOnboardingTour', 'true');
+      setShowTour(false);
+  };
+
+  const tourSteps = [
+      {
+          targetId: 'center',
+          title: "L'YSF Life Center'a Hoş Geldiniz",
+          content: "Yeni nesil wellness yönetim sisteminiz hazır. Size kısa bir tur attıralım mı?",
+          position: 'center' as const
+      },
+      {
+          targetId: 'nav-dashboard',
+          title: "Yönetim Üssü",
+          content: "İşletmenizin finansal durumu, randevu özetleri ve kritik metrikleri buradan takip edin. Yeni 'Alman Disiplini' finansal denetim modülü de burada!",
+          position: 'right' as const
+      },
+      {
+          targetId: 'nav-appointments',
+          title: "Randevu Takvimi",
+          content: "Yapay zeka destekli akıllı takvim ile randevuları yönetin, personel programlarını optimize edin.",
+          position: 'right' as const
+      },
+      {
+          targetId: 'nav-customers',
+          title: "VIP CRM",
+          content: "Müşterilerinizin tüm geçmişini, sadakat durumunu ve yapay zeka destekli önerileri buradan görüntüleyin.",
+          position: 'right' as const
+      },
+      {
+          targetId: 'nav-ai-advice',
+          title: "Büyüme Merkezi",
+          content: "Gemini AI motoru ile işletmeniz için büyüme stratejileri ve pazar analizleri alın.",
+          position: 'right' as const
+      },
+      {
+          targetId: 'nav-customer-portal',
+          title: "Tablet Modu",
+          content: "Müşterileriniz için özel tablet arayüzü. Randevu alma, sadakat takibi ve wellness planları burada.",
+          position: 'right' as const
+      }
+  ];
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -101,6 +156,7 @@ export const Layout: React.FC<{ children: React.ReactNode; currentTab: string; s
           {navItems.filter(item => item.roles.includes(currentRole)).map(item => (
             <button
               key={item.id}
+              id={`nav-${item.id}`}
               onClick={() => setTab(item.id)}
               className={`w-full flex items-center gap-4 px-6 py-4 rounded-[1.5rem] text-sm font-black transition-all duration-300 ${
                 currentTab === item.id 
@@ -117,8 +173,9 @@ export const Layout: React.FC<{ children: React.ReactNode; currentTab: string; s
         <div className="p-6 border-t border-slate-50 space-y-4">
            <div className="flex gap-2">
             <button onClick={exportData} title="Yedekle" className="flex-1 flex items-center justify-center p-4 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-2xl transition-all"><Download size={20} /></button>
-            <button onClick={logout} title="Sistem Değiştir / Çıkış" className="flex-1 flex items-center justify-center p-4 bg-rose-50 text-rose-400 hover:bg-rose-500 hover:text-white rounded-2xl transition-all"><RefreshCw size={20} /></button>
+            <button onClick={() => setShowTour(true)} title="Tur Başlat" className="flex-1 flex items-center justify-center p-4 bg-amber-50 text-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl transition-all"><HelpCircle size={20} /></button>
             <button onClick={() => setShowInstallHelp(true)} title="Uygulamayı Kur" className="flex-1 flex items-center justify-center p-4 bg-emerald-50 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-2xl transition-all"><Smartphone size={20} /></button>
+            <button onClick={logout} title="Sistem Değiştir / Çıkış" className="flex-1 flex items-center justify-center p-4 bg-rose-50 text-rose-400 hover:bg-rose-500 hover:text-white rounded-2xl transition-all"><LogOut size={20} /></button>
           </div>
           
           <div className="bg-slate-900 p-5 rounded-[2rem] border border-white/10 shadow-xl">
@@ -202,6 +259,13 @@ export const Layout: React.FC<{ children: React.ReactNode; currentTab: string; s
            </div>
         </div>
       )}
+
+      <GuidedTour 
+        isOpen={showTour} 
+        onClose={() => setShowTour(false)} 
+        steps={tourSteps}
+        onComplete={handleTourComplete}
+      />
     </div>
   );
 };

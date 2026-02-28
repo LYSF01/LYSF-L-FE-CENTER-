@@ -53,7 +53,10 @@ export const SystemManagement: React.FC = () => {
     const fd = new FormData(e.target as HTMLFormElement);
     const newRule: LoyaltyRule = {
       id: editingLoyalty?.id || Math.random().toString(36).substr(2, 9),
-      minPoints: Number(fd.get('minPoints')),
+      type: fd.get('type') as 'POINTS' | 'STAMPS',
+      category: fd.get('category') as any,
+      minPoints: Number(fd.get('minPoints')) || 0,
+      minStamps: Number(fd.get('minStamps')) || 0,
       reward: fd.get('reward') as string
     };
     
@@ -236,12 +239,14 @@ export const SystemManagement: React.FC = () => {
                    {loyaltyRules.map(rule => (
                      <div key={rule.id} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm flex justify-between items-center group hover:border-amber-400 transition-all">
                         <div>
-                           <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Baraj: {rule.minPoints} Puan</p>
+                           <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">
+                             {rule.type === 'POINTS' ? `Baraj: ${rule.minPoints} Puan` : `Baraj: ${rule.minStamps || 0} Hizmet (${rule.category || 'GENEL'})`}
+                           </p>
                            <h4 className="text-xl font-black italic text-slate-900 mt-1">{rule.reward}</h4>
                         </div>
                         <div className="flex gap-2">
                            <button onClick={() => { setEditingLoyalty(rule); setShowLoyaltyModal(true); }} className="p-3 bg-slate-50 text-slate-300 hover:text-indigo-600 rounded-xl"><Edit size={16}/></button>
-                           <button onClick={() => deleteData(rule.id, 'LOYALTY_RULE')} className="p-3 bg-slate-50 text-slate-300 hover:text-rose-600 rounded-xl"><Trash2 size={16}/></button>
+                           <button onClick={(e) => { e.stopPropagation(); deleteData(rule.id, 'LOYALTY_RULE'); }} className="p-3 bg-slate-50 text-slate-300 hover:text-rose-600 rounded-xl"><Trash2 size={16}/></button>
                         </div>
                      </div>
                    ))}
@@ -326,9 +331,31 @@ export const SystemManagement: React.FC = () => {
               <h3 className="text-4xl font-black tracking-tighter italic flex items-center gap-4"><Award className="text-amber-500" /> Kural Belirle</h3>
               <button type="button" onClick={() => setShowLoyaltyModal(false)} className="p-4 bg-slate-100 rounded-full hover:bg-amber-500 hover:text-white transition-all"><X /></button>
             </div>
-            <div className="space-y-8">
-               <InputBase label="Puan Barajı" name="minPoints" type="number" defaultValue={editingLoyalty?.minPoints} icon={Zap} />
-               <InputBase label="Ödül / Talimat Mesajı" name="reward" defaultValue={editingLoyalty?.reward} placeholder="Örn: Ücretsiz Maske Hediye Et" icon={Gift} />
+            <div className="space-y-6">
+               <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest">Kural Tipi</label>
+                  <select name="type" defaultValue={editingLoyalty?.type || 'POINTS'} className="w-full p-5 bg-slate-50 rounded-2xl font-black outline-none border-2 border-transparent focus:border-slate-900">
+                     <option value="POINTS">Puan Bazlı (Ciro)</option>
+                     <option value="STAMPS">Hizmet Sayısı Bazlı (Stamp)</option>
+                  </select>
+               </div>
+
+               <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest">Kategori (Sadece Stamp İçin)</label>
+                  <select name="category" defaultValue={editingLoyalty?.category || 'GENERAL'} className="w-full p-5 bg-slate-50 rounded-2xl font-black outline-none border-2 border-transparent focus:border-slate-900">
+                     <option value="GENERAL">Genel</option>
+                     <option value="SKIN_CARE">Cilt Bakımı</option>
+                     <option value="NAIL">Tırnak</option>
+                     <option value="DIET">Diyet</option>
+                  </select>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                  <InputBase label="Puan Barajı (Points)" name="minPoints" type="number" defaultValue={editingLoyalty?.minPoints || 0} icon={Zap} />
+                  <InputBase label="Hizmet Sayısı (Stamps)" name="minStamps" type="number" defaultValue={editingLoyalty?.minStamps || 0} icon={Check} />
+               </div>
+
+               <InputBase label="Ödül / Talimat Mesajı" name="reward" defaultValue={editingLoyalty?.reward} placeholder="Örn: 10. Tırnak Bakımı Ücretsiz" icon={Gift} />
             </div>
             <button type="submit" className="w-full py-8 bg-slate-900 text-white rounded-[2.5rem] font-black text-2xl shadow-3xl hover:bg-amber-600 transition-all">{editingLoyalty ? 'Güncelle' : 'Ekle'}</button>
           </form>
@@ -421,7 +448,7 @@ const ManagementCard = ({ title, sub, price, onDelete, onEdit }: any) => (
     </div>
     <div className="flex justify-end gap-2 mt-8">
       <button onClick={onEdit} className="p-3 bg-white text-slate-300 hover:text-indigo-600 rounded-xl shadow-sm transition-colors border border-slate-100"><Edit size={18}/></button>
-      <button onClick={onDelete} className="p-3 bg-white text-slate-300 hover:text-rose-600 rounded-xl shadow-sm transition-colors border border-slate-100"><Trash2 size={18}/></button>
+      <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-3 bg-white text-slate-300 hover:text-rose-600 rounded-xl shadow-sm transition-colors border border-slate-100"><Trash2 size={18}/></button>
     </div>
   </div>
 );

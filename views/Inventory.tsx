@@ -193,7 +193,7 @@ export const Inventory: React.FC = () => {
                     {isManager && (
                        <div className="flex gap-2">
                           <button onClick={() => handleOpenForm(p)} className="p-3 bg-slate-50 text-slate-300 hover:text-indigo-600 rounded-xl transition-all"><Edit size={18}/></button>
-                          <button onClick={() => deleteData(p.id, 'PRODUCT')} className="p-3 bg-slate-50 text-slate-300 hover:text-rose-500 rounded-xl transition-all"><Trash2 size={18}/></button>
+                          <button onClick={(e) => { e.stopPropagation(); deleteData(p.id, 'PRODUCT'); }} className="p-3 bg-slate-50 text-slate-300 hover:text-rose-500 rounded-xl transition-all"><Trash2 size={18}/></button>
                        </div>
                     )}
                  </div>

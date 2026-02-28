@@ -7,20 +7,20 @@ import {
   Zap, Filter, FileText, Scale, 
   Upload, FileSpreadsheet, Printer, AlertCircle, CreditCard, Star, QrCode,
   CalendarClock, Coffee, MessageCircle, CheckCircle2, History, Banknote, Image, Camera, Stamp, CalendarPlus, MoreHorizontal, Trophy, Minus, RefreshCw, Gift, Sparkles, PenTool, Lock, Eye, TrendingUp, Activity, Receipt,
-  Loader2, ArrowDown, Copy, CheckSquare, Square, Send, Video, UserCheck
+  Loader2, ArrowDown, Copy, CheckSquare, Square, Send, Video, UserCheck, Clock, Sun, Apple
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { isDemoMode } from '../firebaseConfig';
 
 export const CustomerCRM: React.FC = () => {
-  const { customers, staff, deleteData, currentRole, addCustomer, updateCustomer, transactions, loyaltyRules, services, searchCustomers, loadMoreCustomers, hasMoreCustomers, isLoadingCustomers, initiateCall } = useSalon();
+  const { customers, staff, deleteData, currentRole, addCustomer, updateCustomer, transactions, appointments, loyaltyRules, services, searchCustomers, loadMoreCustomers, hasMoreCustomers, isLoadingCustomers, initiateCall } = useSalon();
   const [filter, setFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showCardModal, setShowCardModal] = useState<Customer | null>(null);
   const [showDietModal, setShowDietModal] = useState<Customer | null>(null);
   const [showGalleryModal, setShowGalleryModal] = useState<Customer | null>(null);
   const [showLoyaltyStampModal, setShowLoyaltyStampModal] = useState<Customer | null>(null);
-  const [crmActiveTab, setCrmActiveTab] = useState<'OVERVIEW' | 'HISTORY' | 'ANALYSIS' | 'NOTES'>('OVERVIEW');
+  const [crmActiveTab, setCrmActiveTab] = useState<'OVERVIEW' | 'HISTORY' | 'APPOINTMENTS' | 'ANALYSIS' | 'WELLNESS' | 'NOTES'>('OVERVIEW');
   const [editItem, setEditItem] = useState<Customer | null>(null);
   const [filterMode, setFilterMode] = useState<'ALL' | 'INACTIVE' | 'NO_PACKAGE' | 'DUE_FOR_VISIT'>('ALL');
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(new Set());
@@ -296,7 +296,7 @@ export const CustomerCRM: React.FC = () => {
            <button onClick={() => { setShowLoyaltyStampModal(contextMenu.customer); }} className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-xl flex items-center gap-3 text-sm font-bold transition-all text-amber-400"><Stamp size={16} /> Damga Bas</button>
            <div className="h-px bg-white/10 my-2"></div>
            <button onClick={() => { handleOpenEdit(contextMenu.customer); }} className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-xl flex items-center gap-3 text-sm font-bold transition-all"><Edit size={16} /> Düzenle</button>
-           {isManager && <button onClick={() => { deleteData(contextMenu.customer!.id, 'CUSTOMER'); setContextMenu({...contextMenu, visible: false}); }} className="w-full text-left px-4 py-3 hover:bg-rose-500/20 text-rose-500 rounded-xl flex items-center gap-3 text-sm font-bold transition-all"><Trash2 size={16} /> Sil</button>}
+           {isManager && <button onClick={(e) => { e.stopPropagation(); deleteData(contextMenu.customer!.id, 'CUSTOMER'); setContextMenu({...contextMenu, visible: false}); }} className="w-full text-left px-4 py-3 hover:bg-rose-500/20 text-rose-500 rounded-xl flex items-center gap-3 text-sm font-bold transition-all"><Trash2 size={16} /> Sil</button>}
         </div>
       )}
 
@@ -309,7 +309,7 @@ export const CustomerCRM: React.FC = () => {
                 </div>
                 <div className="flex-1 overflow-y-auto p-8 bg-[#0b1120] no-scrollbar">
                     {(!showGalleryModal.gallery || showGalleryModal.gallery.length === 0) ? <div className="h-full flex flex-col items-center justify-center text-slate-600 space-y-4 opacity-50"><Image size={64} /><p className="font-black text-xl italic">Henüz fotoğraf yüklenmemiş.</p></div> : 
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">{showGalleryModal.gallery.map((img, idx) => (<div key={idx} className="aspect-square rounded-[2rem] overflow-hidden relative group border border-white/5 bg-slate-800 shadow-xl"><img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" /><div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 backdrop-blur-sm"><button onClick={() => window.open(img, '_blank')} className="p-3 bg-white/20 text-white rounded-full hover:bg-emerald-500 transition-all" title="Büyüt"><Eye size={20}/></button><button onClick={() => handleDeletePhoto(idx)} className="p-3 bg-white/20 text-white rounded-full hover:bg-rose-500 transition-all" title="Sil"><Trash2 size={20}/></button></div><div className="absolute bottom-4 left-4 bg-black/60 px-3 py-1 rounded-lg text-[9px] font-black text-white uppercase tracking-widest backdrop-blur-md border border-white/10">Foto #{idx + 1}</div></div>))}</div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">{showGalleryModal.gallery.map((img, idx) => (<div key={idx} className="aspect-square rounded-[2rem] overflow-hidden relative group border border-white/5 bg-slate-800 shadow-xl"><img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" /><div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 backdrop-blur-sm"><button onClick={() => window.open(img, '_blank')} className="p-3 bg-white/20 text-white rounded-full hover:bg-emerald-500 transition-all" title="Büyüt"><Eye size={20}/></button><button onClick={(e) => { e.stopPropagation(); handleDeletePhoto(idx); }} className="p-3 bg-white/20 text-white rounded-full hover:bg-rose-500 transition-all" title="Sil"><Trash2 size={20}/></button></div><div className="absolute bottom-4 left-4 bg-black/60 px-3 py-1 rounded-lg text-[9px] font-black text-white uppercase tracking-widest backdrop-blur-md border border-white/10">Foto #{idx + 1}</div></div>))}</div>
                     }
                 </div>
             </div>
@@ -349,7 +349,7 @@ export const CustomerCRM: React.FC = () => {
               <div className="grid grid-cols-12 h-full">
                  <div className="col-span-3 bg-slate-50 border-r border-slate-100 p-8 flex flex-col">
                     <div className="text-center mb-10"><div className="w-24 h-24 mx-auto bg-slate-900 text-white rounded-[2.5rem] flex items-center justify-center text-3xl font-black shadow-xl mb-4">{displayCustomer.fullName.charAt(0)}</div><h3 className="text-xl font-black text-slate-900 italic leading-tight">{displayCustomer.fullName}</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{displayCustomer.tier} Member</p></div>
-                    <div className="space-y-2 mb-10">{['OVERVIEW', 'HISTORY', 'ANALYSIS', 'NOTES'].map(tab => (<button key={tab} onClick={() => setCrmActiveTab(tab as any)} className={`w-full text-left px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-between ${crmActiveTab === tab ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:bg-white hover:text-slate-900'}`}>{tab === 'OVERVIEW' ? 'Genel Bakış' : tab === 'HISTORY' ? 'İşlem Geçmişi' : tab === 'ANALYSIS' ? 'Vücut Analizi' : 'Notlar'}{crmActiveTab === tab && <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>}</button>))}</div>
+                    <div className="space-y-2 mb-10">{['OVERVIEW', 'HISTORY', 'APPOINTMENTS', 'ANALYSIS', 'WELLNESS', 'NOTES'].map(tab => (<button key={tab} onClick={() => setCrmActiveTab(tab as any)} className={`w-full text-left px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-between ${crmActiveTab === tab ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:bg-white hover:text-slate-900'}`}>{tab === 'OVERVIEW' ? 'Genel Bakış' : tab === 'HISTORY' ? 'İşlem Geçmişi' : tab === 'APPOINTMENTS' ? 'Randevular' : tab === 'ANALYSIS' ? 'Vücut Analizi' : tab === 'WELLNESS' ? 'Wellness Planı' : 'Notlar'}{crmActiveTab === tab && <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>}</button>))}</div>
                     <div className="mt-auto bg-white p-6 rounded-3xl border border-slate-100 shadow-sm text-center"><QrCode className="mx-auto text-slate-900 mb-4" size={64} /><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Dijital Kimlik</p></div>
                  </div>
                  <div className="col-span-9 p-12 overflow-y-auto no-scrollbar bg-white">
@@ -441,8 +441,110 @@ export const CustomerCRM: React.FC = () => {
                             </div>
                         </div>
                     )}
+                    {crmActiveTab === 'APPOINTMENTS' && (
+                        <div className="space-y-8 animate-in slide-in-from-right-8 h-full flex flex-col">
+                            <div className="flex items-center gap-4 border-b border-slate-100 pb-4">
+                                <CalendarClock className="text-slate-900" size={24}/>
+                                <h2 className="text-2xl font-black italic tracking-tighter text-slate-900">Randevu Geçmişi</h2>
+                            </div>
+                            
+                            <div className="flex-1 overflow-y-auto pr-2 space-y-4 no-scrollbar">
+                                {appointments.filter(a => a.customerId === displayCustomer.id).length === 0 ? (
+                                    <div className="text-center py-20 text-slate-400 opacity-50 font-bold italic">
+                                        Henüz randevu kaydı bulunmuyor.
+                                    </div>
+                                ) : (
+                                    appointments.filter(a => a.customerId === displayCustomer.id).sort((a,b) => new Date(`${b.date}T${b.time}`).getTime() - new Date(`${a.date}T${a.time}`).getTime()).map(app => {
+                                        const service = services.find(s => s.id === app.serviceId);
+                                        const staffMember = staff.find(s => s.id === app.staffId);
+                                        const isPast = new Date(`${app.date}T${app.time}`) < new Date();
+                                        
+                                        return (
+                                            <div key={app.id} className={`p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all group relative overflow-hidden ${isPast ? 'bg-slate-50 border-slate-100 opacity-80' : 'bg-white border-indigo-100 shadow-sm'}`}>
+                                                <div className="flex items-center gap-6 relative z-10">
+                                                    <div className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center border shadow-sm shrink-0 ${isPast ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
+                                                        <span className="text-xs font-black uppercase">{new Date(app.date).toLocaleString('tr-TR', {month:'short'})}</span>
+                                                        <span className="text-xl font-black">{new Date(app.date).getDate()}</span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-black text-slate-900 italic text-lg leading-tight mb-1">{service?.name || 'Bilinmeyen Hizmet'}</p>
+                                                        <div className="flex flex-wrap items-center gap-3">
+                                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
+                                                                <Clock size={10}/> {app.time}
+                                                            </span>
+                                                            {staffMember && (
+                                                                <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded-lg">
+                                                                    <UserCheck size={10}/> {staffMember.name}
+                                                                </span>
+                                                            )}
+                                                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg ${
+                                                                app.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-600' :
+                                                                app.status === 'CANCELLED' ? 'bg-rose-100 text-rose-600' :
+                                                                app.status === 'CONFIRMED' ? 'bg-indigo-100 text-indigo-600' :
+                                                                'bg-amber-100 text-amber-600'
+                                                            }`}>
+                                                                {app.status === 'COMPLETED' ? 'Tamamlandı' : app.status === 'CANCELLED' ? 'İptal' : app.status === 'CONFIRMED' ? 'Onaylı' : 'Bekliyor'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </div>
+                    )}
                     {crmActiveTab === 'ANALYSIS' && (
                         <div className="space-y-8 animate-in slide-in-from-right-8 h-full flex flex-col"><h2 className="text-3xl font-black italic tracking-tighter text-slate-900">Vücut Analizi</h2>{!displayCustomer.bodyAnalysis || displayCustomer.bodyAnalysis.length === 0 ? (<div className="flex-1 flex flex-col items-center justify-center text-slate-400 opacity-50 space-y-4"><Activity size={64} /><p className="font-black text-xl italic">Analiz verisi bulunamadı.</p><button onClick={() => { setShowCardModal(null); setShowDietModal(displayCustomer); }} className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold uppercase text-xs tracking-widest hover:scale-105 transition-transform">Analiz Ekle</button></div>) : (<div className="flex-1 flex flex-col"><div className="h-[300px] w-full bg-slate-50 rounded-[2rem] p-6 border border-slate-100 mb-8"><ResponsiveContainer width="100%" height="100%"><AreaChart data={[...displayCustomer.bodyAnalysis]}><defs><linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" /><XAxis dataKey="date" tickFormatter={(t) => new Date(t).toLocaleDateString('tr-TR', {day:'numeric', month:'short'})} axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} /><YAxis hide domain={['dataMin - 2', 'dataMax + 2']} /><Tooltip contentStyle={{borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 'bold'}} /><Area type="monotone" dataKey="weight" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorWeight)" name="Kilo" /><Area type="monotone" dataKey="fatPercentage" stroke="#f59e0b" strokeWidth={3} fill="none" name="Yağ %" /></AreaChart></ResponsiveContainer></div><div className="bg-slate-900 text-white p-8 rounded-[2rem] flex justify-between items-center"><div><p className="text-[10px] font-black uppercase opacity-60 tracking-widest mb-1">Son Ölçüm</p><p className="text-3xl font-black italic">{new Date(displayCustomer.bodyAnalysis[displayCustomer.bodyAnalysis.length-1].date).toLocaleDateString()}</p></div><div className="text-right"><p className="text-[10px] font-black uppercase opacity-60 tracking-widest mb-1">Mevcut Kilo</p><p className="text-4xl font-black text-emerald-400">{displayCustomer.bodyAnalysis[displayCustomer.bodyAnalysis.length-1].weight} kg</p></div></div></div>)}</div>
+                    )}
+                    {crmActiveTab === 'WELLNESS' && (
+                        <div className="space-y-8 animate-in slide-in-from-right-8 h-full flex flex-col">
+                            <h2 className="text-3xl font-black italic tracking-tighter text-slate-900">Wellness Planı</h2>
+                            {displayCustomer.wellnessPlan ? (
+                                <div className="space-y-6 overflow-y-auto pr-2 no-scrollbar">
+                                    <div className="bg-indigo-50 p-8 rounded-[2rem] border border-indigo-100">
+                                        <h3 className="text-xl font-black text-indigo-900 italic mb-4">{displayCustomer.wellnessPlan.wellnessPlanTitle}</h3>
+                                        <p className="text-slate-700 font-medium leading-relaxed">{displayCustomer.wellnessPlan.introMessage}</p>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="bg-emerald-50 p-6 rounded-[2rem] border border-emerald-100">
+                                            <h4 className="text-sm font-black uppercase text-emerald-600 tracking-widest mb-3 flex items-center gap-2"><Sun size={16}/> Günlük Rutin</h4>
+                                            <p className="text-slate-700 font-medium text-sm">{displayCustomer.wellnessPlan.dailyRoutineSuggestion}</p>
+                                        </div>
+                                        <div className="bg-rose-50 p-6 rounded-[2rem] border border-rose-100">
+                                            <h4 className="text-sm font-black uppercase text-rose-600 tracking-widest mb-3 flex items-center gap-2"><Apple size={16}/> Beslenme İpucu</h4>
+                                            <p className="text-slate-700 font-medium text-sm">{displayCustomer.wellnessPlan.nutritionTip}</p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h4 className="text-lg font-black italic text-slate-900 mb-4">Önerilen Protokoller</h4>
+                                        <div className="space-y-3">
+                                            {displayCustomer.wellnessPlan.recommendedServices.map((rec: any, idx: number) => {
+                                                const service = services.find(s => s.id === rec.serviceId);
+                                                return (
+                                                    <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm">
+                                                        <div>
+                                                            <p className="font-bold text-slate-900">{service?.name || 'Özel Hizmet'}</p>
+                                                            <p className="text-xs text-slate-500 mt-1">{rec.reason}</p>
+                                                        </div>
+                                                        <button className="p-2 bg-slate-900 text-white rounded-xl hover:bg-emerald-500 transition-colors"><Plus size={16}/></button>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 opacity-50 space-y-4">
+                                    <Sparkles size={64} />
+                                    <p className="font-black text-xl italic">Henüz wellness planı oluşturulmamış.</p>
+                                    <p className="text-sm font-medium">Müşteri tabletinden AI analizi başlatılabilir.</p>
+                                </div>
+                            )}
+                        </div>
                     )}
                     {crmActiveTab === 'NOTES' && (
                         <div className="space-y-8 animate-in slide-in-from-right-8 h-full flex flex-col"><h2 className="text-3xl font-black italic tracking-tighter text-slate-900">Özel Notlar</h2><textarea className="flex-1 w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-8 text-slate-700 font-medium outline-none resize-none focus:ring-4 focus:ring-slate-100 transition-all text-lg leading-relaxed" placeholder="Müşteri hakkında özel notlar, alerjiler veya tercihler..." defaultValue={displayCustomer.preferences.notes} onChange={(e) => {}}></textarea><button onClick={() => { alert("Notlar kaydedildi (Demo)"); }} className="w-full py-5 bg-slate-900 text-white rounded-[2rem] font-black text-xl hover:bg-black transition-all">KAYDET</button></div>

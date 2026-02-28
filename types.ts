@@ -50,7 +50,10 @@ export enum MembershipTier {
 
 export interface LoyaltyRule {
   id: string;
-  minPoints: number;
+  type: 'POINTS' | 'STAMPS';
+  category?: 'SKIN_CARE' | 'NAIL' | 'DIET' | 'GENERAL';
+  minPoints: number; // Used for POINTS type
+  minStamps?: number; // Used for STAMPS type
   reward: string;
   active?: boolean;
 }
@@ -182,6 +185,18 @@ export interface ChatMessage {
   isRead: boolean;
 }
 
+export interface WellnessPlan {
+  wellnessPlanTitle: string;
+  introMessage: string;
+  recommendedServices: {
+    serviceId: string;
+    reason: string;
+  }[];
+  dailyRoutineSuggestion: string;
+  nutritionTip: string;
+  timestamp?: string; // To know when it was generated
+}
+
 export interface Customer {
   id: string;
   fullName: string;
@@ -199,7 +214,8 @@ export interface Customer {
   bodyAnalysis: BodyAnalysis[];
   gallery: string[]; 
   specialPriceList?: Record<string, number>; 
-  loyaltyStamps?: { skinCare: number; nail: number; };
+  loyaltyStamps?: { skinCare: number; nail: number; diet?: number; };
+  wellnessPlan?: WellnessPlan; // AI Generated Plan
   // DIET EXTENSIONS
   dietPassword?: string; // Özel giriş şifresi
   dietPlan?: DietDay[]; // Haftalık plan
@@ -267,7 +283,7 @@ export interface Appointment {
   staffId: string;
   date: string;
   time: string;
-  status: 'PENDING' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
   reminderSent: boolean;
   active?: boolean;
 }

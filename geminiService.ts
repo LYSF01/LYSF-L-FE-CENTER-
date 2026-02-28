@@ -235,3 +235,316 @@ export const getAICustomerSuggestions = async (customer: any, services: any[], s
     return JSON.parse(response.text || '{}');
   });
 };
+
+// D. SCHEDULE OPTIMIZATION (AI ANALYTICS)
+export const optimizeSchedule = async (appointments: any[], services: any[]) => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  // Veriyi sadeleştirme
+  const simplifiedApps = appointments.map(a => ({ 
+    date: a.date, 
+    time: a.time, 
+    serviceId: a.serviceId,
+    status: a.status 
+  }));
+  
+  const simplifiedServices = services.map(s => ({ id: s.id, name: s.name }));
+
+  const prompt = `
+    ROL: L'YSF Life Center Veri Analisti ve Planlama Uzmanı.
+    VERİ: 
+    - Randevular: ${JSON.stringify(simplifiedApps)}
+    - Hizmetler: ${JSON.stringify(simplifiedServices)}
+    
+    GÖREV: Geçmiş randevu verilerini analiz et ve randevu çizelgesini optimize et.
+    
+    ANALİZ ADIMLARI:
+    1. Hangi gün ve saatlerde yoğunluk var? (Peak Hours)
+    2. Hangi hizmetler en çok talep görüyor? (Popular Services)
+    3. Verimsiz (boş) saatleri doldurmak için stratejik öneriler geliştir.
+    4. Önümüzdeki hafta için örnek bir "Optimize Edilmiş Program" önerisi sun.
+    
+    ÇIKTI FORMATI (JSON):
+    {
+      "peakHours": [
+        { "day": "Pazartesi", "hour": "14:00", "intensity": "Yüksek" }
+      ],
+      "popularServices": [
+        { "serviceName": "Cilt Bakımı", "percentage": 45 }
+      ],
+      "strategicSuggestions": [
+        "Salı sabahları boşluklar var, %20 indirimli 'Happy Hour' kampanyası yapılabilir."
+      ],
+      "optimizedScheduleProposal": [
+        { "day": "Pazartesi", "hour": "09:00", "focus": "Hızlı İşlemler (Kaş/Bıyık)", "reason": "Sabah yoğunluğu az, kısa işlemlerle sirkülasyon artırılmalı." }
+      ]
+    }
+  `;
+
+  return fetchWithRetry(async () => {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+                peakHours: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            day: { type: Type.STRING },
+                            hour: { type: Type.STRING },
+                            intensity: { type: Type.STRING }
+                        }
+                    }
+                },
+                popularServices: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            serviceName: { type: Type.STRING },
+                            percentage: { type: Type.NUMBER }
+                        }
+                    }
+                },
+                strategicSuggestions: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                },
+                optimizedScheduleProposal: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            day: { type: Type.STRING },
+                            hour: { type: Type.STRING },
+                            focus: { type: Type.STRING },
+                            reason: { type: Type.STRING }
+                        }
+                    }
+                }
+            }
+        }
+      }
+    });
+    return JSON.parse(response.text || '{}');
+  });
+};
+
+// E. DEMAND FORECASTING (AI PREDICTION)
+export const forecastDemand = async (transactions: any[], services: any[]) => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  // Aggregate monthly usage per service for the last 6 months
+  const monthlyUsage: Record<string, Record<string, number>> = {};
+  transactions.forEach(t => {
+      const date = new Date(t.timestamp);
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      t.items.forEach((item: any) => {
+          if (!monthlyUsage[item.id]) monthlyUsage[item.id] = {};
+          if (!monthlyUsage[item.id][key]) monthlyUsage[item.id][key] = 0;
+          monthlyUsage[item.id][key]++;
+      });
+  });
+
+  const prompt = `
+    ROL: L'YSF Life Center Finansal Planlama Yapay Zekası.
+    VERİ: 
+    - Geçmiş Hizmet Kullanımları (Ay bazlı): ${JSON.stringify(monthlyUsage)}
+    - Hizmet Listesi: ${JSON.stringify(services.map(s => ({id: s.id, name: s.name})))}
+    
+    GÖREV: Gelecek ay için hizmet talep tahmini yap.
+    
+    ANALİZ:
+    1. Mevsimsel trendleri ve büyüme oranlarını dikkate al.
+    2. Her hizmet için "Tahmini Adet" ve "Büyüme Beklentisi (%)" hesapla.
+    3. Düşüş beklenen hizmetler için kısa bir aksiyon önerisi ekle.
+    
+    ÇIKTI FORMATI (JSON):
+    {
+      "forecasts": [
+        { 
+          "serviceId": "...", 
+          "serviceName": "...", 
+          "predictedCount": 120, 
+          "growthRate": 15, 
+          "trend": "UP" | "DOWN" | "STABLE",
+          "actionSuggestion": "..." 
+        }
+      ],
+      "marketInsight": "Genel piyasa yorumu..."
+    }
+  `;
+
+  return fetchWithRetry(async () => {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+                forecasts: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            serviceId: { type: Type.STRING },
+                            serviceName: { type: Type.STRING },
+                            predictedCount: { type: Type.NUMBER },
+                            growthRate: { type: Type.NUMBER },
+                            trend: { type: Type.STRING },
+                            actionSuggestion: { type: Type.STRING }
+                        }
+                    }
+                },
+                marketInsight: { type: Type.STRING }
+            }
+        }
+      }
+    });
+    return JSON.parse(response.text || '{}');
+  });
+};
+
+// F. PROFITABILITY AUDIT (GERMAN DISCIPLINE)
+export const analyzeProfitability = async (transactions: any[], expenses: any[], services: any[]) => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    // Calculate raw metrics
+    const serviceRevenue: Record<string, number> = {};
+    const serviceCount: Record<string, number> = {};
+    
+    transactions.forEach(t => {
+        t.items.forEach((item: any) => {
+            serviceRevenue[item.id] = (serviceRevenue[item.id] || 0) + (item.price || 0);
+            serviceCount[item.id] = (serviceCount[item.id] || 0) + 1;
+        });
+    });
+
+    const prompt = `
+      ROL: Alman Disiplinli Finansal Denetçi (Auditor).
+      VERİ:
+      - Hizmet Gelirleri: ${JSON.stringify(serviceRevenue)}
+      - Hizmet Adetleri: ${JSON.stringify(serviceCount)}
+      - Toplam Giderler: ${expenses.reduce((acc, e) => acc + e.amount, 0)}
+      - Hizmet Maliyet Yapısı: ${JSON.stringify(services.map(s => ({id: s.id, name: s.name, cost: s.productCostPerSession || 0, duration: s.duration})))}
+      
+      GÖREV: Detaylı karlılık analizi yap.
+      
+      ANALİZ ADIMLARI:
+      1. Her hizmetin "Net Kar Marjını" hesapla (Gelir - (Ürün Maliyeti + Operasyonel Gider Payı)).
+      2. En karlı ve en zararlı hizmetleri belirle.
+      3. "Pareto Analizi" yap: Gelirin %80'ini getiren %20'lik hizmetleri belirle.
+      4. Finansal verimliliği artırmak için sert ve net önerilerde bulun.
+      
+      ÇIKTI FORMATI (JSON):
+      {
+        "serviceAnalysis": [
+          { "serviceName": "...", "revenue": 1000, "estimatedCost": 400, "netProfit": 600, "margin": 60, "status": "PROFITABLE" | "CRITICAL" }
+        ],
+        "topPerformers": ["..."],
+        "underPerformers": ["..."],
+        "auditReport": "Detaylı denetçi raporu metni..."
+      }
+    `;
+
+    return fetchWithRetry(async () => {
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-pro-preview',
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    serviceAnalysis: {
+                        type: Type.ARRAY,
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                serviceName: { type: Type.STRING },
+                                revenue: { type: Type.NUMBER },
+                                estimatedCost: { type: Type.NUMBER },
+                                netProfit: { type: Type.NUMBER },
+                                margin: { type: Type.NUMBER },
+                                status: { type: Type.STRING }
+                            }
+                        }
+                    },
+                    topPerformers: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    underPerformers: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    auditReport: { type: Type.STRING }
+                }
+            }
+          }
+        });
+        return JSON.parse(response.text || '{}');
+    });
+};
+
+// G. PERSONALIZED RECOMMENDATIONS (AI WELLNESS PLAN)
+export const getPersonalizedRecommendations = async (customer: any, services: any[]) => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
+    const prompt = `
+      ROL: L'YSF Life Center Kişisel Wellness Koçu ve Estetik Danışmanı.
+      MÜŞTERİ PROFİLİ:
+      - Ad: ${customer.fullName}
+      - Yaş/Cinsiyet: (Tahmini)
+      - Geçmiş İşlemler: ${JSON.stringify(customer.history)}
+      - Satın Alınan Paketler: ${JSON.stringify(customer.packages)}
+      - Vücut Analizi: ${JSON.stringify(customer.bodyAnalysis?.[0] || {})}
+      - Tercihler: ${JSON.stringify(customer.preferences)}
+      
+      HİZMET LİSTESİ: ${JSON.stringify(services.map((s: any) => ({id: s.id, name: s.name, category: s.category})))}
+      
+      GÖREV: Bu müşteri için tamamen kişiselleştirilmiş, bütüncül bir "İyi Yaşam & Güzellik Planı" oluştur.
+      
+      BEKLENEN ÇIKTI (JSON):
+      {
+        "wellnessPlanTitle": "Örn: 'Kışa Hazırlık & Yenilenme Programı'",
+        "introMessage": "Müşteriye hitaben, motive edici ve premium bir giriş yazısı.",
+        "recommendedServices": [
+          { "serviceId": "...", "reason": "Neden bu hizmet? (Cilt tipine/geçmişine göre)" }
+        ],
+        "dailyRoutineSuggestion": "Evde uygulayabileceği sabah/akşam rutini önerisi (kısa).",
+        "nutritionTip": "Vücut analizine veya genel sağlığa yönelik 1 adet beslenme tüyosu."
+      }
+    `;
+
+    return fetchWithRetry(async () => {
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-pro-preview',
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    wellnessPlanTitle: { type: Type.STRING },
+                    introMessage: { type: Type.STRING },
+                    recommendedServices: {
+                        type: Type.ARRAY,
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                serviceId: { type: Type.STRING },
+                                reason: { type: Type.STRING }
+                            }
+                        }
+                    },
+                    dailyRoutineSuggestion: { type: Type.STRING },
+                    nutritionTip: { type: Type.STRING }
+                }
+            }
+          }
+        });
+        return JSON.parse(response.text || '{}');
+    });
+};
